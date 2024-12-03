@@ -3,6 +3,7 @@ package utils
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"strconv"
@@ -27,6 +28,20 @@ func ReadFileAsLines(path string) []string {
 		log.Fatal("scanner error", err)
 	}
 	return lines
+}
+
+func ReadFile(path string) []byte {
+	f, err := os.Open(path)
+	if err != nil {
+		log.Fatal("Could not open file", err)
+	}
+	defer f.Close()
+	fmt.Println(f.Name())
+	b, err := io.ReadAll(f)
+	if err != nil {
+		log.Fatal("read all error:", err)
+	}
+	return b
 }
 
 func SliceAtoi(input []string) []int {
