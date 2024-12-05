@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"slices"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -68,15 +69,32 @@ func main() {
 		}
 
 		if !allPagesOrdered {
-			// try to order them
-			for _, rule := range brokenRules {
-				i := slices.Index(pages, rule.first)
-				j := slices.Index(pages, rule.sec)
-				if i > j { // rule may have been fixed by another swap
-					pages[i] = rule.sec
-					pages[j] = rule.first
+			// // try to order them
+			// for _, rule := range brokenRules {
+			// 	i := slices.Index(pages, rule.first)
+			// 	j := slices.Index(pages, rule.sec)
+			// 	if i > j { // rule may have been fixed by another swap
+			// 		pages[i] = rule.sec
+			// 		pages[j] = rule.first
+			// 	}
+			// }
+
+			sort.Slice(pages, func(i, j int) bool {
+				matchingRules := rules[pages[i]]
+				for _, rule := range matchingRules {
+					if rule.sec == pages[j] {
+						return true
+					}
 				}
-			}
+				matchingRules = rules[pages[j]]
+				for _, rule := range matchingRules {
+					if rule.sec == pages[i] {
+						return false
+					}
+				}
+				return true
+			})
+
 			fmt.Print(line, " | ")
 			for _, p := range pages {
 				fmt.Print(p, ",")
