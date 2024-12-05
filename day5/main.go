@@ -17,10 +17,11 @@ type rule struct {
 
 func main() {
 	lines := utils.ReadFileAsLines("input")
-	rules := make([]rule, 0)
+	rules := make(map[string][]rule, 0)
 
 	var splitIndex int
 	var result1 int
+	var result2 int
 
 	for i, line := range lines {
 		if line == "" {
@@ -33,7 +34,12 @@ func main() {
 			log.Fatalf("Invalid pairs line %q\n", line)
 		}
 
-		rules = append(rules, rule{first: split[0], sec: split[1]})
+		if _, ok := rules[split[0]]; !ok {
+			rules[split[0]] = []rule{rule{first: split[0], sec: split[1]}}
+		} else {
+			rules[split[0]] = append(rules[split[0]], rule{first: split[0], sec: split[1]})
+		}
+
 	}
 
 	for _, line := range lines[splitIndex+1:] {
@@ -41,22 +47,41 @@ func main() {
 
 		allPagesOrdered := true
 
-		for _, rule := range rules {
+		brokenRules := make([]rule, 0)
+
+		for _, p := range pages {
+			matchingRules := rules[p]
 			// see if this rule applies
-			if slices.Contains(pages, rule.first) && slices.Contains(pages, rule.sec) {
+			for _, rule := range matchingRules {
+				if !slices.Contains(pages, rule.sec) {
+					// rule does not apply
+					continue
+				}
 				// check first comes before second
 				i := slices.Index(pages, rule.first)
 				if i == len(pages)-1 || !slices.Contains(pages[i+1:], rule.sec) {
 					// second isn't after first, one of the rules is broken, stop looking
 					allPagesOrdered = false
-					break
+					brokenRules = append(brokenRules, rule)
 				}
 			}
-			// rule does not apply
 		}
 
 		if !allPagesOrdered {
-			continue
+			// try to order them
+			for _, rule := range brokenRules {
+				i := slices.Index(pages, rule.first)
+				j := slices.Index(pages, rule.sec)
+				if i > j { // rule may have been fixed by another swap
+					pages[i] = rule.sec
+					pages[j] = rule.first
+				}
+			}
+			fmt.Print(line, " | ")
+			for _, p := range pages {
+				fmt.Print(p, ",")
+			}
+			fmt.Println()
 		}
 
 		// find the middle page
@@ -65,9 +90,14 @@ func main() {
 		if err != nil {
 			log.Fatalf("could not parse page number %q from line %q\n", mid, line)
 		}
-		fmt.Println(line)
-		result1 += x
+
+		if allPagesOrdered {
+			result1 += x
+		} else {
+			result2 += x
+		}
 	}
 
 	fmt.Println("Day 5 Part 1:", result1)
+	fmt.Println("Day 5 Part 2:", result2)
 }
